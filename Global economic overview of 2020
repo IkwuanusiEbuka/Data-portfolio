@@ -1,0 +1,314 @@
+select continent, location, population, population_density, reproduction_rate, per_capita_income, gross_domestic_product,
+
+life_expectancy, human_development_index from dbo.CovidDeaths
+
+where continent is not null
+
+
+
+--CALCULATE THE GROSS DOMESTIC PRODUCT
+
+alter table dbo.coviddeaths
+
+add gross_domestic_product money
+
+update dbo.CovidDeaths
+
+set gross_domestic_product = per_capita_income * population
+
+
+
+--CREATE TEMPORARY TABLE TO MAKE FURTHER QUERIES
+
+drop table if exists #economic_portfolio
+
+create table #economic_portfolio (
+
+continent varchar(50), location varchar(50), population bigint, population_density decimal, reproduction_rate varchar(255), 
+
+per_capita_income money, gross_domestic_product bigint, life_expectancy float, human_development_index float)
+
+insert into #economic_portfolio select continent, location, population, population_density, reproduction_rate, per_capita_income, gross_domestic_product,
+
+life_expectancy, human_development_index from dbo.CovidDeaths
+
+where continent is not null
+
+select * from #economic_portfolio
+
+
+
+--TOP 20 COUNTRIES WITH THE HIGHEST LIFE EXPECTANCY 
+
+select top 20 location, avg(life_expectancy) life_expectancy_ranking  from dbo.CovidDeaths
+
+where continent is not null
+
+group by location
+
+order by life_expectancy_ranking desc
+
+
+
+--TOP 20 COUNTRIES WITH THE HIGHEST REPRODUCTION RATE
+
+select top 20 location, avg(convert( numeric, reproduction_rate)) reproduction_rate_ranking  from dbo.CovidDeaths
+
+where continent is not null 
+
+group by location
+
+order by reproduction_rate_ranking desc
+
+
+
+--ROLLING REPRODUCTION RATE
+
+select continent, location, reproduction_rate, sum(convert(decimal,reproduction_rate))
+
+over(partition by location order by reproduction_rate) [rolling reproduction rate]
+
+from dbo.CovidDeaths
+
+where continent is not null
+
+order by [rolling reproduction rate] desc
+
+
+
+--GDP OF CONTINENTS 
+
+select continent ,sum(cast(gross_domestic_product as bigint )) gdp_rank_for_continent from dbo.CovidDeaths
+
+where continent is not null
+
+group by continent
+
+order by gdp_rank_for_continent desc
+
+
+
+--TOP 20 COUNTRIES WITH HIGHEST GDP
+
+select top 20 continent, location, avg(cast(gross_domestic_product as bigint)) gdp_ranking from dbo.CovidDeaths
+
+where continent is not null 
+
+group by continent, location
+
+order by gdp_ranking desc
+
+
+
+--FASTEST DEVELOPING COUNTRIES 
+
+select top 20 location, avg(human_development_index) hdi_ranking, avg(per_capita_income) pci_ranking  from dbo.CovidDeaths
+
+where continent is not null 
+
+group by location
+
+order by hdi_ranking  desc
+
+
+
+--COUNTRIES WITH HIGHEST POPULATION
+
+select top 50 continent, location, population, population_density from dbo.CovidDeaths
+
+where continent is not null
+
+group by continent, location, population, population_density
+
+order by population desc
+
+
+
+--POPULATION PERCENTAGE BY CONTINENT
+
+select location, (population/sum(population)) from dbo.CovidDeaths
+
+where continent is  null
+
+group by location, population
+
+
+
+--HOW PER CAPITA INCOME AFFECTS LIFE EXPECTANCY 
+
+--countries with pci >23,000 live longer than 70 years
+
+select location, avg(life_expectancy) [life expectancy], avg(per_capita_income) [per capita income] from dbo.CovidDeaths
+
+where continent is not null 
+
+group by  location
+
+order by [life expectancy] desc
+
+
+
+select location, avg(life_expectancy) [life expectancy], avg(per_capita_income) [per capita income] from dbo.CovidDeaths
+
+where continent is not null 
+
+group by  location
+
+having avg(per_capita_income) > 23000
+
+order by [life expectancy] desc
+
+
+
+--COUNTRIES WITH THE HIGHEST GDP USE TEMP TABLE TO SOLVE PERCENTAGE OF WORLD GDP
+
+drop table if exists #GDP
+
+create table #GDP ( continent varchar(50), location varchar(50), gross_domestic_product money)
+
+insert into #GDP select continent, location, avg(cast(gross_domestic_product as bigint)) gdp from dbo.CovidDeaths
+
+where continent is not null 
+
+group by continent, location
+
+order by gdp desc
+
+select * from #GDP
+
+order by gross_domestic_product desc
+
+alter table #GDP
+
+add percentage_of_world_gdp  decimal(9,5)
+
+select sum(gross_domestic_product) from #GDP
+
+update #GDP
+
+set percentage_of_world_gdp = (gross_domestic_product/117627825733049)
+
+
+
+--CREATING VIEWS FOR VISUALIZATION (order by doesnt work in view unless there is top)
+
+--done
+
+create view [country with the highest life expectancy] as
+
+select top 220 location, avg(life_expectancy) life_expectancy_ranking  from dbo.CovidDeaths
+
+where continent is not null
+
+group by location
+
+order by life_expectancy_ranking desc
+
+--done
+
+create view [gdp of continent] as
+
+select top 10 continent ,sum(cast(gross_domestic_product as bigint )) gdp_rank_for_continent from dbo.CovidDeaths
+
+where continent is not null
+
+group by continent
+
+order by gdp_rank_for_continent desc
+
+--done
+
+create view [countries with highest gdp] as 
+
+select top 220 continent, location, avg(cast(gross_domestic_product as bigint)) gdp_ranking from dbo.CovidDeaths
+
+where continent is not null 
+
+group by continent, location
+
+order by gdp_ranking desc
+
+--done
+
+create view [countries with highest reproduction rate] as
+
+select top 220 location, avg(convert( numeric, reproduction_rate)) reproduction_rate_ranking  from dbo.CovidDeaths
+
+where continent is not null 
+
+group by location
+
+order by reproduction_rate_ranking desc
+
+--done
+
+create view [countries with pci > 2300] as
+
+select top 60 location, avg(life_expectancy) [life expectancy], avg(per_capita_income) [per capita income] from dbo.CovidDeaths
+
+where continent is not null 
+
+group by  location
+
+having avg(per_capita_income) > 23000
+
+order by [life expectancy] desc
+
+
+
+create view [countries with highest hdi] as
+
+select top 220 location, avg(human_development_index) hdi_ranking, avg(per_capita_income) pci_ranking  from dbo.CovidDeaths
+
+where continent is not null 
+
+group by location
+
+order by hdi_ranking  desc
+
+
+
+create view [most populous country] as
+
+select top 220 continent, location, population, population_density from dbo.CovidDeaths
+
+where continent is not null
+
+group by continent, location, population, population_density
+
+order by population desc
+
+
+
+         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
