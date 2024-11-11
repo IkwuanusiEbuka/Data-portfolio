@@ -274,7 +274,7 @@ group by continent, location, population, population_density
 order by population desc
 
 LINK TO VISUALIZATION:
-(https://app.powerbi.com/links/eV9ni1L22W?ctid=5fe78ac1-1afe-4009-aa04-a71efb4a5042&pbi_source=linkShare)
+([https://app.powerbi.com/links/eV9ni1L22W?ctid=5fe78ac1-1afe-4009-aa04-a71efb4a5042&pbi_source=linkShare])
 
          
 
