@@ -192,7 +192,6 @@ set percentage_of_world_gdp = (gross_domestic_product/117627825733049)
 
 --CREATING VIEWS FOR VISUALIZATION (order by doesnt work in view unless there is top)
 
---done
 
 create view [country with the highest life expectancy] as
 
@@ -204,7 +203,6 @@ group by location
 
 order by life_expectancy_ranking desc
 
---done
 
 create view [gdp of continent] as
 
@@ -216,7 +214,6 @@ group by continent
 
 order by gdp_rank_for_continent desc
 
---done
 
 create view [countries with highest gdp] as 
 
@@ -228,7 +225,6 @@ group by continent, location
 
 order by gdp_ranking desc
 
---done
 
 create view [countries with highest reproduction rate] as
 
@@ -240,7 +236,6 @@ group by location
 
 order by reproduction_rate_ranking desc
 
---done
 
 create view [countries with pci > 2300] as
 
